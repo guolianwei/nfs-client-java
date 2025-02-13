@@ -161,30 +161,14 @@ public class Connection {
                 // 设置 SO_KEEPALIVE 参数：开启 TCP 长连接保活机制
                 .option(ChannelOption.SO_KEEPALIVE, true).
                 attr(AttributeKey.valueOf(CONNECTION_OPTION), this);
-
-        // Configure the pipeline factory.
-/*        _clientBootstrap.setPipelineFactory(new ChannelPipelineFactory() {
-
-            *//**
-             * Netty helper instance.
-             *//*
-            private final ChannelHandler ioHandler = new ClientIOHandler(_clientBootstrap);
-
-            *//* (non-Javadoc)
-             * @see org.jboss.netty.channel.ChannelPipelineFactory#getPipeline()
-             *//*
-            public ChannelPipeline getPipeline() throws Exception {
-                return Channels.pipeline(new RPCRecordDecoder(), ioHandler);
-            }
-        });*/
         _clientBootstrap.handler(new ChannelInitializer<SocketChannel>() {
             private final ChannelHandler ioHandler = new ClientIOHandler(_clientBootstrap,Connection.this);
             @Override
             protected void initChannel(SocketChannel socketChannel) throws Exception {
                 Object o = socketChannel.attr(AttributeKey.valueOf(CONNECTION_OPTION)).get();
                 ChannelPipeline pipeline = socketChannel.pipeline();
-                pipeline.addLast(ioHandler);
                 pipeline.addLast(new RPCRecordDecoder());
+                pipeline.addLast(ioHandler);
             }
         });
     }
