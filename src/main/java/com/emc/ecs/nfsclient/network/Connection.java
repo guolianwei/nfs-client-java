@@ -183,7 +183,6 @@ public class Connection {
             protected void initChannel(SocketChannel socketChannel) throws Exception {
                 Object o = socketChannel.attr(AttributeKey.valueOf(CONNECTION_OPTION)).get();
                 ChannelPipeline pipeline = socketChannel.pipeline();
-                pipeline.addLast("logger", new LoggingHandler(LogLevel.DEBUG));
                 pipeline.addLast(ioHandler);
                 pipeline.addLast(new RPCRecordDecoder());
             }
@@ -282,10 +281,7 @@ public class Connection {
         Xdr response = _responseMap.remove(xid);
         _futureMap.remove(xid);
 
-        if (timeoutFuture.isSuccess() == false) {
-
-            LOG.warn("cause:", "timeout");
-
+        if (!timeoutFuture.isSuccess()) {
             if (timeoutFuture.isDone()) {
                 String msg = String.format("tcp IO error on the connection: %s", getRemoteAddress());
                 throw new RpcException(RpcStatus.NETWORK_ERROR, msg);
