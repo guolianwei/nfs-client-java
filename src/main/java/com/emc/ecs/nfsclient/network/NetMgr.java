@@ -17,8 +17,9 @@ package com.emc.ecs.nfsclient.network;
 import com.emc.ecs.nfsclient.rpc.RpcException;
 import com.emc.ecs.nfsclient.rpc.Xdr;
 
-import org.jboss.netty.channel.ChannelFactory;
-import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory;
+import com.sun.media.jfxmedia.logging.Logger;
+import io.netty.channel.ChannelFactory;
+//import io.netty.channel.socket.nio.NioClientSocketChannelFactory;
 
 import java.net.InetSocketAddress;
 import java.util.Map;
@@ -66,7 +67,7 @@ public class NetMgr {
     /**
      * Netty helper instance.
      */
-    private ChannelFactory _factory = new NioClientSocketChannelFactory(newThreadPool(), newThreadPool());
+//    private ChannelFactory _factory = new NioEventLoopGroup(newThreadPool(), newThreadPool());
 
     /**
      * @return a thread pool instance using the proper factory to create daemon threads
@@ -151,7 +152,7 @@ public class NetMgr {
             connection.shutdown();
         }
 
-        _factory.releaseExternalResources();
+//        _factory.releaseExternalResources();
     }
 
     /**
@@ -159,7 +160,7 @@ public class NetMgr {
      * 
      * @return The factory.
      */
-    public ChannelFactory getFactory() {
+ /*   public ChannelFactory getFactory() {
         return _factory;
-    }
+    }*/
 }

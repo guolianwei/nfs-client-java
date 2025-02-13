@@ -65,7 +65,7 @@ repositories {
 }
 
 dependencies {
-    implementation "io.netty:netty:3.10.6.Final"
+    implementation "io.netty:netty-all:4.1.116.Final"
     implementation "org.apache.commons:commons-lang3:3.12.0"
     implementation "org.slf4j:slf4j-api:1.7.36"
 
@@ -217,6 +217,13 @@ gitPublish {
     preserve { include '**/*' }
 }
 tasks.gitPublishPush.dependsOn aggregateDocs
+
+task testNfsConnection(type: JavaExec) {
+    group = 'NFS Tests'
+    description = 'Run NFS connection test'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.emc.ecs.nfsclient.NFSConnectionTest'
+}
 
 tasks.release.dependsOn test, publish, gitPublishPush, distZip
 

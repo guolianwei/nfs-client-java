@@ -17,9 +17,9 @@ package com.emc.ecs.nfsclient.network;
 import com.emc.ecs.nfsclient.rpc.Xdr;
 
 import org.apache.commons.lang3.NotImplementedException;
-import org.jboss.netty.buffer.ChannelBuffer;
-import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.channel.Channel;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
+import io.netty.buffer.Unpooled;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -112,6 +112,16 @@ public class RecordMarkingUtil {
 
         // send out remaining buffers
         if (!outBuffers.isEmpty()) {
+            byte[] bytes1 = {
+                    (byte) 0x80, (byte) 0x00, (byte) 0x00, (byte) 0x38, (byte) 0x29, (byte) 0x36, (byte) 0x84, (byte) 0x28,
+                    (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x02,
+                    (byte) 0x00, (byte) 0x01, (byte) 0x86, (byte) 0xa0, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x02,
+                    (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x03, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00,
+                    (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00,
+                    (byte) 0x00 ,(byte) 0x00 ,(byte) 0x00 ,(byte) 0x00,(byte) 0x00, (byte) 0x01, (byte) 0x86, (byte) 0xa3,
+                    (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x03, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x06,
+                    (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00
+            };
             sendBuffers(channel, bytesToWrite, outBuffers, true);
         }
     }
@@ -152,6 +162,20 @@ public class RecordMarkingUtil {
 
         return toReturn;
     }
+    public static byte[] mergeByteBuffers(List<ByteBuffer> outBuffers) {
+        // 计算总长度
+        int totalLength = outBuffers.stream().mapToInt(ByteBuffer::remaining).sum();
+
+        // 创建一个新的字节数组
+        byte[] mergedArray = new byte[totalLength];
+
+        // 使用单个 ByteBuffer 进行高效数据复制
+        ByteBuffer mergedBuffer = ByteBuffer.wrap(mergedArray);
+        for (ByteBuffer buffer : outBuffers) {
+            mergedBuffer.put(buffer.duplicate());  // 使用 duplicate 避免影响原 Buffer 的 position
+        }
+        return mergedArray;
+    }
 
     /**
      * @param channel
@@ -161,7 +185,6 @@ public class RecordMarkingUtil {
      */
     private static void sendBuffers(Channel channel, int bytesToWrite, List<ByteBuffer> outBuffers, boolean isLast) {
         ByteBuffer recSizeBuf = ByteBuffer.allocate(4);
-
         if (isLast) {
             recSizeBuf.putInt(LAST_FRAG | bytesToWrite);
         } else {
@@ -169,12 +192,47 @@ public class RecordMarkingUtil {
         }
         recSizeBuf.rewind();
         outBuffers.add(0, recSizeBuf);
+        byte[] bytes2= mergeByteBuffers(outBuffers);
+//        ByteBuffer[] outArray = outBuffers.toArray(new ByteBuffer[outBuffers.size()]);
+//        ByteBuf channelBuffer = Unpooled.wrappedBuffer(outArray);
 
-        ByteBuffer[] outArray = outBuffers.toArray(new ByteBuffer[outBuffers.size()]);
-        ChannelBuffer channelBuffer = ChannelBuffers.wrappedBuffer(outArray);
-        channel.write(channelBuffer);
+//        byte[] bytes1 = {
+//                (byte) 0x80, (byte) 0x00, (byte) 0x00, (byte) 0x38, (byte) 0x29, (byte) 0x36, (byte) 0x84, (byte) 0x28,
+//                (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x02,
+//                (byte) 0x00, (byte) 0x01, (byte) 0x86, (byte) 0xa0, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x02,
+//                (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x03, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00,
+//                (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00,
+//                (byte) 0x00 ,(byte) 0x00 ,(byte) 0x00 ,(byte) 0x00,(byte) 0x00, (byte) 0x01, (byte) 0x86, (byte) 0xa3,
+//                (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x03, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x06,
+//                (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00
+//        };
+
+        ByteBuf byteBuf = Unpooled.wrappedBuffer(bytes2);
+//        compareBuffers(channelBuffer, bytes1);
+        channel.write(byteBuf);
+        channel.flush();
     }
+    private static void compareBuffers(ByteBuf buffer, byte[] array) {
+        int minLength = Math.min(buffer.readableBytes(), array.length);
+        boolean isEqual = true;
 
+        for (int i = 0; i < minLength; i++) {
+            byte bufByte = buffer.getByte(i);
+            byte arrByte = array[i];
+            if (bufByte != arrByte) {
+                System.out.printf("Difference at index %d: channelBuffer = 0x%02X, bytes1 = 0x%02X%n", i, bufByte, arrByte);
+                isEqual = false;
+            }
+        }
+
+        if (buffer.readableBytes() != array.length) {
+            System.out.println("Buffers have different lengths.");
+        }
+
+        if (isEqual) {
+            System.out.println("Buffers are identical.");
+        }
+    }
     /**
      * @param fragmentSize
      *            A long that contains either the int number of bytes in the
