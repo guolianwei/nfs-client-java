@@ -112,16 +112,6 @@ public class RecordMarkingUtil {
 
         // send out remaining buffers
         if (!outBuffers.isEmpty()) {
-            byte[] bytes1 = {
-                    (byte) 0x80, (byte) 0x00, (byte) 0x00, (byte) 0x38, (byte) 0x29, (byte) 0x36, (byte) 0x84, (byte) 0x28,
-                    (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x02,
-                    (byte) 0x00, (byte) 0x01, (byte) 0x86, (byte) 0xa0, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x02,
-                    (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x03, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00,
-                    (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00,
-                    (byte) 0x00 ,(byte) 0x00 ,(byte) 0x00 ,(byte) 0x00,(byte) 0x00, (byte) 0x01, (byte) 0x86, (byte) 0xa3,
-                    (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x03, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x06,
-                    (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00
-            };
             sendBuffers(channel, bytesToWrite, outBuffers, true);
         }
     }
@@ -193,22 +183,7 @@ public class RecordMarkingUtil {
         recSizeBuf.rewind();
         outBuffers.add(0, recSizeBuf);
         byte[] bytes2= mergeByteBuffers(outBuffers);
-//        ByteBuffer[] outArray = outBuffers.toArray(new ByteBuffer[outBuffers.size()]);
-//        ByteBuf channelBuffer = Unpooled.wrappedBuffer(outArray);
-
-//        byte[] bytes1 = {
-//                (byte) 0x80, (byte) 0x00, (byte) 0x00, (byte) 0x38, (byte) 0x29, (byte) 0x36, (byte) 0x84, (byte) 0x28,
-//                (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x02,
-//                (byte) 0x00, (byte) 0x01, (byte) 0x86, (byte) 0xa0, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x02,
-//                (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x03, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00,
-//                (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00,
-//                (byte) 0x00 ,(byte) 0x00 ,(byte) 0x00 ,(byte) 0x00,(byte) 0x00, (byte) 0x01, (byte) 0x86, (byte) 0xa3,
-//                (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x03, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x06,
-//                (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00
-//        };
-
         ByteBuf byteBuf = Unpooled.wrappedBuffer(bytes2);
-//        compareBuffers(channelBuffer, bytes1);
         channel.write(byteBuf);
         channel.flush();
     }
